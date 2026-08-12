@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.zygl.mapper.ResourceManagementMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.zygl.entity.ResourceManagement">
+        <id column="pk_id" property="pkId"/>
+        <result column="resource_name" property="resourceName"/>
+        <result column="resource_url" property="resourceUrl"/>
+        <result column="resource_type" property="resourceType"/>
+        <result column="cover_url" property="coverUrl"/>
+        <result column="school_stage" property="schoolStage"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="category_path" property="categoryPath"/>
+        <result column="resource_tag" property="resourceTag"/>
+        <result column="scope" property="scope"/>
+        <result column="uploader" property="uploader"/>
+        <result column="school_uid" property="schoolUid"/>
+        <result column="school_name" property="schoolName"/>
+        <result column="status" property="status"/>
+        <result column="rejection_reason" property="rejectionReason"/>
+        <result column="recommended" property="recommended"/>
+        <result column="pinned" property="pinned"/>
+        <result column="clicks" property="clicks"/>
+        <result column="creator" property="creator"/>
+        <result column="create_time" property="createTime"/>
+        <result column="updater" property="updater"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        pk_id, resource_name, resource_url, resource_type, cover_url, school_stage,
+        category_id, category_path, resource_tag, scope, uploader, school_uid, school_name,
+        status, rejection_reason, recommended, pinned, clicks,
+        creator, create_time, updater, update_time, tenant_id, deleted
+    </sql>
+
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM resource_management
+        WHERE deleted = 0
+        <if test="resourceName != null and resourceName != ''">
+            AND resource_name LIKE CONCAT('%', #{resourceName}, '%')
+        </if>
+        <if test="resourceType != null">
+            AND resource_type = #{resourceType}
+        </if>
+        <if test="categoryId != null">
+            AND category_id = #{categoryId}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="scope != null">
+            AND scope = #{scope}
+        </if>
+        <if test="recommended != null">
+            AND recommended = #{recommended}
+        </if>
+        <if test="pinned != null">
+            AND pinned = #{pinned}
+        </if>
+        ORDER BY pinned DESC, create_time DESC
+    </select>
+
+    <select id="selectByCategoryId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM resource_management
+        WHERE deleted = 0
+        AND category_id = #{categoryId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByUploader" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM resource_management
+        WHERE deleted = 0
+        AND uploader = #{uploader}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectRecommended" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM resource_management
+        WHERE deleted = 0
+        AND recommended = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectPinned" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM resource_management
+        WHERE deleted = 0
+        AND pinned = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <update id="addClick">
+        UPDATE resource_management SET clicks = clicks + 1 WHERE pk_id = #{id} AND deleted = 0
+    </update>
+
+</mapper>

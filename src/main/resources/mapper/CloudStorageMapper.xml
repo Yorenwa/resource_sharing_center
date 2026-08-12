@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.zygl.mapper.CloudStorageMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.zygl.entity.CloudStorage">
+        <id column="pk_id" property="pkId"/>
+        <result column="total_storage" property="totalStorage"/>
+        <result column="used_storage" property="usedStorage"/>
+        <result column="doc_used_storage" property="docUsedStorage"/>
+        <result column="video_used_storage" property="videoUsedStorage"/>
+        <result column="usage_rate" property="usageRate"/>
+        <result column="tenant_id" property="tenantId"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        pk_id, total_storage, used_storage, doc_used_storage, video_used_storage,
+        usage_rate, tenant_id
+    </sql>
+
+    <select id="selectByTenantId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM cloud_storage
+        WHERE tenant_id = #{tenantId}
+        LIMIT 1
+    </select>
+
+</mapper>

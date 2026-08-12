@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.zygl.mapper.BrowseHistoryMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.zygl.entity.BrowseHistory">
+        <id column="pk_id" property="pkId"/>
+        <result column="user_id" property="userId"/>
+        <result column="resource_id" property="resourceId"/>
+        <result column="resource_name" property="resourceName"/>
+        <result column="resource_history_url" property="resourceHistoryUrl"/>
+        <result column="resource_type" property="resourceType"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="category_path" property="categoryPath"/>
+        <result column="browse_time" property="browseTime"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        pk_id, user_id, resource_id, resource_name, resource_history_url, resource_type,
+        category_id, category_path, browse_time, tenant_id, deleted
+    </sql>
+
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM browse_history
+        WHERE deleted = 0
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
+        <if test="resourceType != null">
+            AND resource_type = #{resourceType}
+        </if>
+        <if test="categoryId != null">
+            AND category_id = #{categoryId}
+        </if>
+        ORDER BY browse_time DESC
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM browse_history
+        WHERE deleted = 0
+        AND user_id = #{userId}
+        ORDER BY browse_time DESC
+    </select>
+
+    <select id="selectByResourceId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM browse_history
+        WHERE deleted = 0
+        AND resource_id = #{resourceId}
+        ORDER BY browse_time DESC
+    </select>
+
+</mapper>
