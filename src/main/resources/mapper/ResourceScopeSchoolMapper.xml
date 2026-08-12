@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.zygl.mapper.ResourceScopeSchoolMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.zygl.entity.ResourceScopeSchool">
+        <id column="pk_id" property="pkId"/>
+        <result column="resource_id" property="resourceId"/>
+        <result column="school_uid" property="schoolUid"/>
+        <result column="school_name" property="schoolName"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        pk_id, resource_id, school_uid, school_name, tenant_id, deleted
+    </sql>
+
+    <select id="selectByResourceId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM resource_scope_school
+        WHERE deleted = 0
+        AND resource_id = #{resourceId}
+    </select>
+
+    <select id="selectBySchoolUid" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM resource_scope_school
+        WHERE deleted = 0
+        AND school_uid = #{schoolUid}
+    </select>
+
+</mapper>
