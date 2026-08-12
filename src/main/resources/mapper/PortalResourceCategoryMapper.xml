@@ -67,6 +67,35 @@
         ORDER BY `order` ASC
     </select>
 
+    <!-- 查询所有分类（用于树形组装） -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM portal_resource_category
+        WHERE deleted = 0
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY level ASC, `order` ASC
+    </select>
+
+    <!-- 统计指定分类下的子分类数量 -->
+    <select id="countChildren" resultType="int">
+        SELECT COUNT(*)
+        FROM portal_resource_category
+        WHERE deleted = 0
+        AND parent_id = #{parentId}
+    </select>
+
+    <!-- 更新单个分类状态 -->
+    <update id="updateStatus">
+        UPDATE portal_resource_category
+        SET status = #{status}, update_time = NOW()
+        WHERE pk_id = #{id} AND deleted = 0
+    </update>
+
     <!-- 条件分页查询 -->
     <select id="selectPageByCondition" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
@@ -83,57 +112,5 @@
         </if>
         ORDER BY `order` ASC
     </select>
-
-    <!-- 新增 -->
-    <insert id="insertCategory" parameterType="org.example.zygl.entity.PortalResourceCategory" useGeneratedKeys="true" keyProperty="pkId">
-        INSERT INTO portal_resource_category
-        (type_uid, type_name, parent_id, level, path, type, `order`, status, creator, create_time, updater, update_time, tenant_id, deleted)
-        VALUES
-        (#{typeUid}, #{typeName}, #{parentId}, #{level}, #{path}, #{type}, #{order}, #{status}, #{creator}, #{createTime}, #{updater}, #{updateTime}, #{tenantId}, 0)
-    </insert>
-
-    <!-- 批量新增 -->
-    <insert id="insertBatch" parameterType="java.util.List">
-        INSERT INTO portal_resource_category
-        (type_uid, type_name, parent_id, level, path, type, `order`, status, creator, create_time, updater, update_time, tenant_id, deleted)
-        VALUES
-        <foreach collection="list" item="item" separator=",">
-            (#{item.typeUid}, #{item.typeName}, #{item.parentId}, #{item.level}, #{item.path}, #{item.type}, #{item.order}, #{item.status},
-             #{item.creator}, #{item.createTime}, #{item.updater}, #{item.updateTime}, #{item.tenantId}, 0)
-        </foreach>
-    </insert>
-
-    <!-- 更新 -->
-    <update id="updateCategory" parameterType="org.example.zygl.entity.PortalResourceCategory">
-        UPDATE portal_resource_category
-        <set>
-            <if test="typeUid != null">type_uid = #{typeUid},</if>
-            <if test="typeName != null and typeName != ''">type_name = #{typeName},</if>
-            <if test="parentId != null">parent_id = #{parentId},</if>
-            <if test="level != null">level = #{level},</if>
-            <if test="path != null">path = #{path},</if>
-            <if test="type != null">type = #{type},</if>
-            <if test="order != null">`order` = #{order},</if>
-            <if test="status != null">status = #{status},</if>
-            <if test="updater != null and updater != ''">updater = #{updater},</if>
-            <if test="updateTime != null">update_time = #{updateTime},</if>
-            <if test="tenantId != null">tenant_id = #{tenantId},</if>
-        </set>
-        WHERE pk_id = #{pkId} AND deleted = 0
-    </update>
-
-    <!-- 根据ID逻辑删除 -->
-    <update id="deleteById">
-        UPDATE portal_resource_category SET deleted = 1 WHERE pk_id = #{id}
-    </update>
-
-    <!-- 批量逻辑删除 -->
-    <update id="deleteBatchByIds">
-        UPDATE portal_resource_category SET deleted = 1
-        WHERE pk_id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </update>
 
 </mapper>
