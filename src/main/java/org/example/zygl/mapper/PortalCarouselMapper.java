@@ -15,4 +15,12 @@ public interface PortalCarouselMapper extends BaseMapper<PortalCarousel> {
                                                  @Param("status") Integer status);
 
     List<PortalCarousel> selectByStatus(@Param("status") Integer status);
+
+    int countByStatus(@Param("status") Integer status);
+
+    int countAll();
+
+    int updateStatus(@Param("id") Long id, @Param("status") Integer status);
+
+    int updateOrderBatch(@Param("list") List<PortalCarousel> list);
 }

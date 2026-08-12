@@ -10,6 +10,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 资源管理服务实现类
+ * <p>
+ * 资源管理表用于存储门户展示的各类资源信息，支持按分类、上传人、推荐状态、置顶状态等条件查询。
+ */
 @Service
 public class ResourceManagementServiceImpl
         extends ServiceImpl<ResourceManagementMapper, ResourceManagement>
@@ -44,6 +49,15 @@ public class ResourceManagementServiceImpl
         return baseMapper.selectPinned();
     }
 
+    /**
+     * 资源点击量自增
+     * <p>
+     * 用户浏览或点击资源时调用，通过 SQL UPDATE 实现原子递增，避免并发问题。
+     * 仅更新 click_count 字段和 update_time，不触发全量字段更新。
+     *
+     * @param id 资源主键ID
+     * @return 是否更新成功
+     */
     @Override
     public boolean addClick(Long id) {
         return baseMapper.addClick(id) > 0;
