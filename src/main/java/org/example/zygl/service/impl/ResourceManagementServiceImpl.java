@@ -3,15 +3,24 @@ package org.example.zygl.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.example.zygl.converter.ResourceUploadConverter;
 import org.example.zygl.dto.CategoryStatDTO;
+import org.example.zygl.dto.ResourceUploadRequest;
 import org.example.zygl.entity.PortalResourceCategory;
+import org.example.zygl.entity.ResourceDetail;
 import org.example.zygl.entity.ResourceManagement;
+import org.example.zygl.enums.ResourceScopeEnum;
+import org.example.zygl.enums.ResourceStatusEnum;
+import org.example.zygl.enums.ToggleStatusEnum;
 import org.example.zygl.mapper.PortalResourceCategoryMapper;
 import org.example.zygl.mapper.ResourceManagementMapper;
+import org.example.zygl.service.ResourceDetailService;
 import org.example.zygl.service.ResourceManagementService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,9 +44,15 @@ public class ResourceManagementServiceImpl
     public static final int MAX_PINNED_PER_CATEGORY = 4;
 
     private final PortalResourceCategoryMapper categoryMapper;
+    private final ResourceDetailService resourceDetailService;
+    private final ResourceUploadConverter resourceUploadConverter;
 
-    public ResourceManagementServiceImpl(PortalResourceCategoryMapper categoryMapper) {
+    public ResourceManagementServiceImpl(PortalResourceCategoryMapper categoryMapper,
+                                          ResourceDetailService resourceDetailService,
+                                          ResourceUploadConverter resourceUploadConverter) {
         this.categoryMapper = categoryMapper;
+        this.resourceDetailService = resourceDetailService;
+        this.resourceUploadConverter = resourceUploadConverter;
     }
 
     @Override
@@ -116,13 +131,13 @@ public class ResourceManagementServiceImpl
     @Override
     @Transactional
     public boolean updatePinned(Long id, Integer pinned) {
-        if (pinned == 1) {
+        if (pinned != null && pinned == ToggleStatusEnum.ON.getCode()) {
             ResourceManagement entity = getById(id);
             if (entity == null) {
                 throw new RuntimeException("资源不存在");
             }
             // 如果已是置顶状态，直接允许（幂等）
-            if (entity.getPinned() != null && entity.getPinned() == 1) {
+            if (entity.getPinned() != null && entity.getPinned() == ToggleStatusEnum.ON.getCode()) {
                 return true;
             }
             // 校验一级分类下的置顶资源数
@@ -148,7 +163,7 @@ public class ResourceManagementServiceImpl
         if (category == null) {
             return categoryId;
         }
-        if (category.getLevel() != null && category.getLevel() == 1) {
+        if (category.getLevel() != null && category.getLevel() == PortalResourceCategoryServiceImpl.LEVEL_1) {
             return categoryId;
         }
         // 二级分类，返回其父分类ID
@@ -168,7 +183,8 @@ public class ResourceManagementServiceImpl
         if (entity == null) {
             return false;
         }
-        Integer newVal = (entity.getRecommended() != null && entity.getRecommended() == 1) ? 0 : 1;
+        Integer newVal = (entity.getRecommended() != null && entity.getRecommended() == ToggleStatusEnum.ON.getCode())
+                ? ToggleStatusEnum.OFF.getCode() : ToggleStatusEnum.ON.getCode();
         return updateRecommended(id, newVal);
     }
 
@@ -182,7 +198,8 @@ public class ResourceManagementServiceImpl
         if (entity == null) {
             return false;
         }
-        Integer newVal = (entity.getPinned() != null && entity.getPinned() == 1) ? 0 : 1;
+        Integer newVal = (entity.getPinned() != null && entity.getPinned() == ToggleStatusEnum.ON.getCode())
+                ? ToggleStatusEnum.OFF.getCode() : ToggleStatusEnum.ON.getCode();
         return updatePinned(id, newVal);
     }
 
@@ -206,11 +223,12 @@ public class ResourceManagementServiceImpl
     @Override
     @Transactional
     public boolean batchUpdatePinned(List<Long> ids, Integer pinned) {
-        if (pinned == 1) {
+        if (pinned != null && pinned == ToggleStatusEnum.ON.getCode()) {
             // 校验每条资源所属分类的置顶上限
             for (Long id : ids) {
                 ResourceManagement entity = getById(id);
-                if (entity != null && (entity.getPinned() == null || entity.getPinned() != 1)) {
+                if (entity != null && (entity.getPinned() == null
+                        || !entity.getPinned().equals(ToggleStatusEnum.ON.getCode()))) {
                     Long level1Id = resolveLevel1CategoryId(entity.getCategoryId());
                     int pinnedCount = baseMapper.countPinnedByCategoryId(level1Id);
                     if (pinnedCount >= MAX_PINNED_PER_CATEGORY) {
@@ -229,7 +247,7 @@ public class ResourceManagementServiceImpl
     @Override
     @Transactional
     public boolean approve(Long id) {
-        return baseMapper.updateStatus(id, 2, null) > 0;
+        return baseMapper.updateStatus(id, ResourceStatusEnum.APPROVED.getCode(), null) > 0;
     }
 
     /**
@@ -238,7 +256,7 @@ public class ResourceManagementServiceImpl
     @Override
     @Transactional
     public boolean reject(Long id, String rejectionReason) {
-        return baseMapper.updateStatus(id, 3, rejectionReason) > 0;
+        return baseMapper.updateStatus(id, ResourceStatusEnum.REJECTED.getCode(), rejectionReason) > 0;
     }
 
     /**
@@ -247,7 +265,7 @@ public class ResourceManagementServiceImpl
     @Override
     @Transactional
     public boolean batchApprove(List<Long> ids) {
-        int rows = baseMapper.batchUpdateStatus(ids, 2, null);
+        int rows = baseMapper.batchUpdateStatus(ids, ResourceStatusEnum.APPROVED.getCode(), null);
         return rows > 0;
     }
 
@@ -257,7 +275,59 @@ public class ResourceManagementServiceImpl
     @Override
     @Transactional
     public boolean batchReject(List<Long> ids, String rejectionReason) {
-        int rows = baseMapper.batchUpdateStatus(ids, 3, rejectionReason);
+        int rows = baseMapper.batchUpdateStatus(ids, ResourceStatusEnum.REJECTED.getCode(), rejectionReason);
         return rows > 0;
+    }
+
+    /**
+     * 保存资源及明细（上传流程）
+     * <p>
+     * 优化点：
+     * <ul>
+     *   <li>使用 MapStruct 自动映射 DTO → Entity，消除手动 set 样板代码</li>
+     *   <li>使用枚举替代魔法数字，提升可读性</li>
+     *   <li>使用 saveBatch 批量插入明细，将 N 次 SQL 降为 1 次</li>
+     * </ul>
+     * 全程事务保护，任一环节失败则回滚。
+     *
+     * @param request 上传请求体
+     * @return 资源主表 ID
+     */
+    @Override
+    @Transactional
+    public Long saveWithDetails(ResourceUploadRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. DTO → Entity（MapStruct 自动映射公共字段）
+        ResourceManagement entity = resourceUploadConverter.toEntity(request);
+
+        // 2. 填充默认值（使用枚举，消除魔法数字）
+        entity.setStatus(ResourceStatusEnum.PENDING.getCode());
+        entity.setRecommended(ToggleStatusEnum.OFF.getCode());
+        entity.setPinned(ToggleStatusEnum.OFF.getCode());
+        entity.setClicks(0);
+        if (entity.getScope() == null) {
+            entity.setScope(ResourceScopeEnum.PUBLIC.getCode());
+        }
+        entity.setCreator(request.getUploader());
+        entity.setCreateTime(now);
+        entity.setUpdateTime(now);
+        this.save(entity);
+
+        Long resourceId = entity.getPkId();
+
+        // 3. 批量保存资源明细（MapStruct 映射 + saveBatch 一次插入）
+        List<ResourceDetail> details = resourceUploadConverter.toDetailEntities(request.getDetails());
+        int episodeNo = 1;
+        for (ResourceDetail detail : details) {
+            detail.setResourceId(resourceId);
+            if (detail.getEpisodeNo() == null || detail.getEpisodeNo() == 0) {
+                detail.setEpisodeNo(episodeNo);
+            }
+            episodeNo++;
+        }
+        resourceDetailService.saveBatch(details);
+
+        return resourceId;
     }
 }

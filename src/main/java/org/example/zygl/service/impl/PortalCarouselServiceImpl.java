@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.example.zygl.entity.PortalCarousel;
+import org.example.zygl.enums.ToggleStatusEnum;
 import org.example.zygl.mapper.PortalCarouselMapper;
 import org.example.zygl.service.PortalCarouselService;
 import org.springframework.stereotype.Service;
@@ -59,7 +60,7 @@ public class PortalCarouselServiceImpl
     @Override
     @Transactional
     public boolean updateStatus(Long id, Integer status) {
-        if (status == 1) {
+        if (status != null && status == ToggleStatusEnum.ON.getCode()) {
             validateBeforeEnable(id);
         }
         return baseMapper.updateStatus(id, status) > 0;
@@ -81,7 +82,9 @@ public class PortalCarouselServiceImpl
         if (entity == null) {
             return false;
         }
-        Integer newStatus = (entity.getStatus() == 1) ? 0 : 1;
+        Integer newStatus = (entity.getStatus() != null
+                && entity.getStatus() == ToggleStatusEnum.ON.getCode())
+                ? ToggleStatusEnum.OFF.getCode() : ToggleStatusEnum.ON.getCode();
         return updateStatus(id, newStatus);
     }
 
@@ -118,8 +121,8 @@ public class PortalCarouselServiceImpl
         if (total >= MAX_TOTAL) {
             throw new RuntimeException("轮播图总数已达上限(" + MAX_TOTAL + "个)");
         }
-        if (status != null && status == 1) {
-            int enabled = countByStatus(1);
+        if (status != null && status == ToggleStatusEnum.ON.getCode()) {
+            int enabled = countByStatus(ToggleStatusEnum.ON.getCode());
             if (enabled >= MAX_ENABLED) {
                 throw new RuntimeException("启用中的轮播图已达上限(" + MAX_ENABLED + "个)");
             }
@@ -138,11 +141,12 @@ public class PortalCarouselServiceImpl
      */
     @Override
     public void validateBeforeEnable(Long id) {
-        int enabled = countByStatus(1);
+        int enabled = countByStatus(ToggleStatusEnum.ON.getCode());
         if (enabled >= MAX_ENABLED) {
             // 查询目标记录的当前状态：若本身已启用，说明启用数未变，允许操作
             PortalCarousel entity = getById(id);
-            if (entity != null && entity.getStatus() == 1) {
+            if (entity != null && entity.getStatus() != null
+                    && entity.getStatus() == ToggleStatusEnum.ON.getCode()) {
                 return;
             }
             throw new RuntimeException("启用中的轮播图已达上限(" + MAX_ENABLED + "个)");

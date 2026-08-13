@@ -7,6 +7,7 @@ import org.example.zygl.dto.CategoryStatDTO;
 import org.example.zygl.dto.BatchPinnedRequest;
 import org.example.zygl.dto.BatchRecommendedRequest;
 import org.example.zygl.dto.BatchRejectRequest;
+import org.example.zygl.dto.ResourceUploadRequest;
 import org.example.zygl.entity.ResourceManagement;
 import org.example.zygl.service.ResourceManagementService;
 import org.example.zygl.utils.R;
@@ -284,5 +285,20 @@ public class ResourceManagementController {
     public R<Boolean> removeBatch(@Valid @RequestBody BatchIdsRequest request) {
         boolean result = resourceManagementService.removeByIds(request.getIds());
         return R.ok(result);
+    }
+
+    /**
+     * 保存资源及明细（上传流程）
+     * <p>
+     * 对应前端"上传资源"页面的提交操作。
+     * 资源状态初始为待审核(1)，审核通过后方可在门户展示。
+     *
+     * @param request 上传请求体，包含公共信息和资源明细列表
+     * @return 资源主表 ID
+     */
+    @PostMapping("/upload")
+    public R<Long> upload(@Valid @RequestBody ResourceUploadRequest request) {
+        Long resourceId = resourceManagementService.saveWithDetails(request);
+        return R.ok(resourceId);
     }
 }

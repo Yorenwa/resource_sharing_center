@@ -3,6 +3,7 @@ package org.example.zygl.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.example.zygl.dto.CategoryStatDTO;
+import org.example.zygl.dto.ResourceUploadRequest;
 import org.example.zygl.entity.ResourceManagement;
 
 import java.util.List;
@@ -110,4 +111,14 @@ public interface ResourceManagementService extends IService<ResourceManagement> 
      * 批量审核驳回
      */
     boolean batchReject(List<Long> ids, String rejectionReason);
+
+    /**
+     * 保存资源及明细（上传流程）
+     * <p>
+     * 先保存资源主表，再批量保存资源明细，全程事务保护。
+     *
+     * @param request 上传请求体
+     * @return 资源主表 ID
+     */
+    Long saveWithDetails(ResourceUploadRequest request);
 }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.example.zygl.entity.PortalResourceCategory;
 import org.example.zygl.entity.PortalResourceCategoryNode;
+import org.example.zygl.enums.ToggleStatusEnum;
 import org.example.zygl.mapper.PortalResourceCategoryMapper;
 import org.example.zygl.service.PortalResourceCategoryService;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,16 @@ import java.util.stream.Collectors;
 public class PortalResourceCategoryServiceImpl
         extends ServiceImpl<PortalResourceCategoryMapper, PortalResourceCategory>
         implements PortalResourceCategoryService {
+
+    /**
+     * 根节点父ID（一级分类的 parentId 为 0 或 null）
+     */
+    public static final long ROOT_PARENT_ID = 0L;
+
+    /**
+     * 一级分类的层级值
+     */
+    public static final int LEVEL_1 = 1;
 
     @Override
     public List<PortalResourceCategory> listByType(Integer type) {
@@ -80,7 +91,7 @@ public class PortalResourceCategoryServiceImpl
         // 转换并组装树形结构，一级分类 namePath = typeName
         List<PortalResourceCategoryNode> roots = new ArrayList<>();
         for (PortalResourceCategory cat : all) {
-            if (cat.getParentId() == null || cat.getParentId() == 0L) {
+            if (cat.getParentId() == null || cat.getParentId() == ROOT_PARENT_ID) {
                 roots.add(toNode(cat, parentMap, cat.getTypeName()));
             }
         }
@@ -191,7 +202,9 @@ public class PortalResourceCategoryServiceImpl
         if (entity == null) {
             return false;
         }
-        Integer newStatus = (entity.getStatus() == 1) ? 0 : 1;
+        Integer newStatus = (entity.getStatus() != null
+                && entity.getStatus() == ToggleStatusEnum.ON.getCode())
+                ? ToggleStatusEnum.OFF.getCode() : ToggleStatusEnum.ON.getCode();
         return baseMapper.updateStatus(id, newStatus) > 0;
     }
 
@@ -225,8 +238,8 @@ public class PortalResourceCategoryServiceImpl
      */
     @Override
     public boolean save(PortalResourceCategory entity) {
-        if (entity.getParentId() == null || entity.getParentId() == 0L) {
-            entity.setLevel(1);
+        if (entity.getParentId() == null || entity.getParentId() == ROOT_PARENT_ID) {
+            entity.setLevel(LEVEL_1);
             entity.setPath(null);
         } else {
             PortalResourceCategory parent = getById(entity.getParentId());
@@ -234,7 +247,7 @@ public class PortalResourceCategoryServiceImpl
                 entity.setLevel(parent.getLevel() + 1);
                 entity.setPath(buildPath(parent.getPath(), parent.getPkId()));
             } else {
-                entity.setLevel(1);
+                entity.setLevel(LEVEL_1);
                 entity.setPath(null);
             }
         }
