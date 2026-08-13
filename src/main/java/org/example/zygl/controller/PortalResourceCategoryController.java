@@ -2,15 +2,16 @@ package org.example.zygl.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
+import org.example.zygl.dto.BatchIdsRequest;
 import org.example.zygl.entity.PortalResourceCategory;
 import org.example.zygl.entity.PortalResourceCategoryNode;
 import org.example.zygl.service.PortalResourceCategoryService;
 import org.example.zygl.utils.R;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 门户资源分类管理接口
@@ -203,12 +204,8 @@ public class PortalResourceCategoryController {
     }
 
     @DeleteMapping("/batch")
-    public R<Boolean> removeBatch(@RequestBody Map<String, List<Long>> body) {
-        List<Long> ids = body.get("ids");
-        if (ids == null || ids.isEmpty()) {
-            return R.fail("ids不能为空");
-        }
-        boolean result = portalResourceCategoryService.removeByIds(ids);
+    public R<Boolean> removeBatch(@Valid @RequestBody BatchIdsRequest request) {
+        boolean result = portalResourceCategoryService.removeByIds(request.getIds());
         return R.ok(result);
     }
 }

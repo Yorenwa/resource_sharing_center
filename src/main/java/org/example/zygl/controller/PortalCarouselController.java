@@ -2,11 +2,13 @@ package org.example.zygl.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
+import org.example.zygl.dto.BatchIdsRequest;
 import org.example.zygl.entity.PortalCarousel;
 import org.example.zygl.service.PortalCarouselService;
 import org.example.zygl.utils.R;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -185,12 +187,8 @@ public class PortalCarouselController {
     }
 
     @DeleteMapping("/batch")
-    public R<Boolean> removeBatch(@RequestBody Map<String, List<Long>> body) {
-        List<Long> ids = body.get("ids");
-        if (ids == null || ids.isEmpty()) {
-            return R.fail("ids不能为空");
-        }
-        boolean result = portalCarouselService.removeByIds(ids);
+    public R<Boolean> removeBatch(@Valid @RequestBody BatchIdsRequest request) {
+        boolean result = portalCarouselService.removeByIds(request.getIds());
         return R.ok(result);
     }
 }
