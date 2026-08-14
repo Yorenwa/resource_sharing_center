@@ -24,13 +24,19 @@ public interface PortalResourceCategoryMapper extends BaseMapper<PortalResourceC
 
     List<PortalResourceCategory> selectByTypeName(@Param("typeName") String typeName);
 
-    int insertCategory(PortalResourceCategory entity);
+    /**
+     * 查询所有分类（用于树形组装）
+     */
+    List<PortalResourceCategory> selectAll(@Param("type") Integer type,
+                                           @Param("status") Integer status);
 
-    int insertBatch(@Param("list") List<PortalResourceCategory> list);
+    /**
+     * 统计指定分类下的子分类数量
+     */
+    int countChildren(@Param("parentId") Long parentId);
 
-    int updateCategory(PortalResourceCategory entity);
-
-    int deleteById(@Param("id") Long id);
-
-    int deleteBatchByIds(@Param("ids") List<Long> ids);
+    /**
+     * 更新单个分类状态
+     */
+    int updateStatus(@Param("id") Long id, @Param("status") Integer status);
 }

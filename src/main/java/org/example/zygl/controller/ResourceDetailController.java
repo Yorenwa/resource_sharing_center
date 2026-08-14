@@ -2,13 +2,14 @@ package org.example.zygl.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
+import org.example.zygl.dto.BatchIdsRequest;
 import org.example.zygl.entity.ResourceDetail;
 import org.example.zygl.service.ResourceDetailService;
 import org.example.zygl.utils.R;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/resource-detail")
@@ -46,7 +47,7 @@ public class ResourceDetailController {
     }
 
     @PostMapping
-    public R<Boolean> save(@RequestBody ResourceDetail entity) {
+    public R<Boolean> save(@Valid @RequestBody ResourceDetail entity) {
         boolean result = resourceDetailService.save(entity);
         return R.ok(result);
     }
@@ -58,7 +59,7 @@ public class ResourceDetailController {
     }
 
     @PutMapping
-    public R<Boolean> update(@RequestBody ResourceDetail entity) {
+    public R<Boolean> update(@Valid @RequestBody ResourceDetail entity) {
         boolean result = resourceDetailService.updateById(entity);
         return R.ok(result);
     }
@@ -70,12 +71,8 @@ public class ResourceDetailController {
     }
 
     @DeleteMapping("/batch")
-    public R<Boolean> removeBatch(@RequestBody Map<String, List<Long>> body) {
-        List<Long> ids = body.get("ids");
-        if (ids == null || ids.isEmpty()) {
-            return R.fail("ids不能为空");
-        }
-        boolean result = resourceDetailService.removeByIds(ids);
+    public R<Boolean> removeBatch(@Valid @RequestBody BatchIdsRequest request) {
+        boolean result = resourceDetailService.removeByIds(request.getIds());
         return R.ok(result);
     }
 }

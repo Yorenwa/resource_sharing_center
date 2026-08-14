@@ -41,4 +41,44 @@
         ORDER BY `order` ASC
     </select>
 
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*)
+        FROM portal_carousel
+        WHERE deleted = 0
+        AND status = #{status}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*)
+        FROM portal_carousel
+        WHERE deleted = 0
+    </select>
+
+    <update id="updateStatus">
+        UPDATE portal_carousel
+        SET status = #{status}, update_time = NOW()
+        WHERE pk_id = #{id} AND deleted = 0
+    </update>
+
+    <!--
+        批量更新排序
+        实现方式：使用 CASE WHEN 语法在单条 UPDATE 中完成多行排序更新，
+        避免 MySQL 默认不支持多条分号分隔 UPDATE 的问题。
+        示例：UPDATE t SET order = CASE pk_id WHEN 1 THEN 3 WHEN 2 THEN 1 END, update_time = NOW() WHERE pk_id IN (1,2)
+    -->
+    <update id="updateOrderBatch">
+        UPDATE portal_carousel
+        SET `order` = CASE pk_id
+        <foreach collection="list" item="item">
+            WHEN #{item.pkId} THEN #{item.order}
+        </foreach>
+        END,
+        update_time = NOW()
+        WHERE deleted = 0
+        AND pk_id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.pkId}
+        </foreach>
+    </update>
+
 </mapper>

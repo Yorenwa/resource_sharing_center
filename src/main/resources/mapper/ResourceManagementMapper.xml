@@ -36,6 +36,7 @@
         creator, create_time, updater, update_time, tenant_id, deleted
     </sql>
 
+    <!-- 条件分页查询：支持一级/二级分类、上传人、学校等多条件 -->
     <select id="selectPageByCondition" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM resource_management
@@ -49,6 +50,14 @@
         <if test="categoryId != null">
             AND category_id = #{categoryId}
         </if>
+        <!-- 一级分类过滤：查询该一级分类及其所有子分类下的资源 -->
+        <if test="level1CategoryId != null">
+            AND (category_id = #{level1CategoryId} OR category_path LIKE CONCAT(#{level1CategoryId}, '/%') OR category_path LIKE CONCAT('%/', #{level1CategoryId}, '/%'))
+        </if>
+        <!-- 二级分类过滤：仅查询该二级分类下的资源 -->
+        <if test="level2CategoryId != null">
+            AND category_id = #{level2CategoryId}
+        </if>
         <if test="status != null">
             AND status = #{status}
         </if>
@@ -60,6 +69,12 @@
         </if>
         <if test="pinned != null">
             AND pinned = #{pinned}
+        </if>
+        <if test="uploader != null and uploader != ''">
+            AND uploader LIKE CONCAT('%', #{uploader}, '%')
+        </if>
+        <if test="schoolUid != null">
+            AND school_uid = #{schoolUid}
         </if>
         ORDER BY pinned DESC, create_time DESC
     </select>
@@ -96,8 +111,120 @@
         ORDER BY create_time DESC
     </select>
 
+    <!-- 点击量原子递增 -->
     <update id="addClick">
         UPDATE resource_management SET clicks = clicks + 1 WHERE pk_id = #{id} AND deleted = 0
     </update>
+
+    <!-- 统计分类资源数 -->
+    <select id="countByCategoryId" resultType="int">
+        SELECT COUNT(*) FROM resource_management
+        WHERE deleted = 0 AND category_id = #{categoryId}
+    </select>
+
+    <!-- 统计分类下已置顶资源数 -->
+    <select id="countPinnedByCategoryId" resultType="int">
+        SELECT COUNT(*) FROM resource_management
+        WHERE deleted = 0 AND category_id = #{categoryId} AND pinned = 1
+    </select>
+
+    <!-- 统计推荐资源总数 -->
+    <select id="countRecommended" resultType="int">
+        SELECT COUNT(*) FROM resource_management
+        WHERE deleted = 0 AND recommended = 1
+    </select>
+
+    <!-- 切换推荐状态 -->
+    <update id="updateRecommended">
+        UPDATE resource_management
+        SET recommended = #{recommended}, update_time = NOW()
+        WHERE pk_id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 切换置顶状态 -->
+    <update id="updatePinned">
+        UPDATE resource_management
+        SET pinned = #{pinned}, update_time = NOW()
+        WHERE pk_id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 批量设置推荐状态 -->
+    <update id="batchUpdateRecommended">
+        UPDATE resource_management
+        SET recommended = #{recommended}, update_time = NOW()
+        WHERE pk_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 批量设置置顶状态 -->
+    <update id="batchUpdatePinned">
+        UPDATE resource_management
+        SET pinned = #{pinned}, update_time = NOW()
+        WHERE pk_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 更新审核状态 -->
+    <update id="updateStatus">
+        UPDATE resource_management
+        SET status = #{status},
+        <if test="rejectionReason != null">
+            rejection_reason = #{rejectionReason},
+        </if>
+        update_time = NOW()
+        WHERE pk_id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 批量更新审核状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE resource_management
+        SET status = #{status},
+        <if test="rejectionReason != null">
+            rejection_reason = #{rejectionReason},
+        </if>
+        update_time = NOW()
+        WHERE pk_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 统计分类（含子分类）下全部资源数 -->
+    <select id="countByCategoryPath" resultType="int">
+        SELECT COUNT(*) FROM resource_management
+        WHERE deleted = 0
+        AND (category_path LIKE CONCAT(#{categoryPath}, '/%') OR category_id IN (
+            SELECT pk_id FROM portal_resource_category WHERE path LIKE CONCAT(#{categoryPath}, '/%') AND deleted = 0
+        ))
+    </select>
+
+    <!-- 统计分类（含子分类）下已置顶资源数 -->
+    <select id="countPinnedByCategoryPath" resultType="int">
+        SELECT COUNT(*) FROM resource_management
+        WHERE deleted = 0 AND pinned = 1
+        AND (category_path LIKE CONCAT(#{categoryPath}, '/%') OR category_id IN (
+            SELECT pk_id FROM portal_resource_category WHERE path LIKE CONCAT(#{categoryPath}, '/%') AND deleted = 0
+        ))
+    </select>
+
+    <!-- 分类资源统计（全部、置顶、推荐） -->
+    <select id="categoryStats" resultType="org.example.zygl.dto.CategoryStatDTO">
+        SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN pinned = 1 THEN 1 ELSE 0 END) AS pinned,
+            SUM(CASE WHEN recommended = 1 THEN 1 ELSE 0 END) AS recommended
+        FROM resource_management
+        WHERE deleted = 0
+        <if test="categoryPath != null and categoryPath != ''">
+            AND (category_path LIKE CONCAT(#{categoryPath}, '/%') OR category_path = #{categoryPath})
+        </if>
+    </select>
 
 </mapper>

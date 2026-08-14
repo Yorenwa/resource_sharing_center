@@ -40,6 +40,12 @@ public class BrowseHistory implements Serializable {
     @TableField("category_path")
     private String categoryPath;
 
+    /**
+     * 分类名称路径（瞬态字段，由 Service 层填充，如 "区级安全宣传/安全制度"）
+     */
+    @TableField(exist = false)
+    private String categoryNamePath;
+
     @TableField("browse_time")
     private LocalDateTime browseTime;
 

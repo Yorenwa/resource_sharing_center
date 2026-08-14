@@ -1,13 +1,14 @@
 package org.example.zygl.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.zygl.dto.BatchIdsRequest;
 import org.example.zygl.entity.ResourceScopeSchool;
 import org.example.zygl.service.ResourceScopeSchoolService;
 import org.example.zygl.utils.R;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/resource-scope-school")
@@ -41,7 +42,7 @@ public class ResourceScopeSchoolController {
     }
 
     @PostMapping
-    public R<Boolean> save(@RequestBody ResourceScopeSchool entity) {
+    public R<Boolean> save(@Valid @RequestBody ResourceScopeSchool entity) {
         boolean result = resourceScopeSchoolService.save(entity);
         return R.ok(result);
     }
@@ -53,7 +54,7 @@ public class ResourceScopeSchoolController {
     }
 
     @PutMapping
-    public R<Boolean> update(@RequestBody ResourceScopeSchool entity) {
+    public R<Boolean> update(@Valid @RequestBody ResourceScopeSchool entity) {
         boolean result = resourceScopeSchoolService.updateById(entity);
         return R.ok(result);
     }
@@ -65,12 +66,8 @@ public class ResourceScopeSchoolController {
     }
 
     @DeleteMapping("/batch")
-    public R<Boolean> removeBatch(@RequestBody Map<String, List<Long>> body) {
-        List<Long> ids = body.get("ids");
-        if (ids == null || ids.isEmpty()) {
-            return R.fail("ids不能为空");
-        }
-        boolean result = resourceScopeSchoolService.removeByIds(ids);
+    public R<Boolean> removeBatch(@Valid @RequestBody BatchIdsRequest request) {
+        boolean result = resourceScopeSchoolService.removeByIds(request.getIds());
         return R.ok(result);
     }
 }
