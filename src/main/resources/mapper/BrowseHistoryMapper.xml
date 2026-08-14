@@ -31,8 +31,11 @@
         <if test="resourceType != null">
             AND resource_type = #{resourceType}
         </if>
-        <if test="categoryId != null">
-            AND category_id = #{categoryId}
+        <if test="categoryPath != null and categoryPath != ''">
+            AND (category_path = #{categoryPath} OR category_path LIKE CONCAT(#{categoryPath}, '%'))
+        </if>
+        <if test="resourceName != null and resourceName != ''">
+            AND resource_name LIKE CONCAT('%', #{resourceName}, '%')
         </if>
         ORDER BY browse_time DESC
     </select>
