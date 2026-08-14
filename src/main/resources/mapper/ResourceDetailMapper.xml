@@ -38,4 +38,15 @@
         ORDER BY episode_no ASC
     </select>
 
+    <select id="sumStorageByResourceType" resultType="java.lang.Long">
+        SELECT COALESCE(SUM(COALESCE(d.resource_storage, 0) + COALESCE(d.attachment_storage, 0)), 0)
+        FROM resource_detail d
+        INNER JOIN resource_management r ON d.resource_id = r.pk_id
+        WHERE d.deleted = 0 AND r.deleted = 0
+          AND r.resource_type = #{resourceType}
+        <if test="tenantId != null and tenantId != ''">
+          AND r.tenant_id = #{tenantId}
+        </if>
+    </select>
+
 </mapper>
