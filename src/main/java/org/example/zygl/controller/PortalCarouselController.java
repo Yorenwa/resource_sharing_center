@@ -3,16 +3,16 @@ package org.example.zygl.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.example.zygl.dto.BatchIdsRequest;
+import org.example.zygl.dto.CarouselStatsDTO;
 import org.example.zygl.entity.PortalCarousel;
+import org.example.zygl.enums.ToggleStatusEnum;
 import org.example.zygl.service.PortalCarouselService;
 import org.example.zygl.utils.R;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 门户轮播图管理接口
@@ -64,13 +64,13 @@ public class PortalCarouselController {
      * @return 统计信息：total(总数)、enabled(启用数)、maxEnabled(启用上限)、maxTotal(总数上限)
      */
     @GetMapping("/stats")
-    public R<Map<String, Integer>> stats() {
-        Map<String, Integer> result = new HashMap<>();
-        result.put("total", portalCarouselService.countAll());
-        result.put("enabled", portalCarouselService.countByStatus(1));
-        result.put("maxEnabled", PortalCarouselService.MAX_ENABLED);
-        result.put("maxTotal", PortalCarouselService.MAX_TOTAL);
-        return R.ok(result);
+    public R<CarouselStatsDTO> stats() {
+        CarouselStatsDTO dto = new CarouselStatsDTO();
+        dto.setTotal(portalCarouselService.countAll());
+        dto.setEnabled(portalCarouselService.countByStatus(ToggleStatusEnum.ON.getCode()));
+        dto.setMaxEnabled(PortalCarouselService.MAX_ENABLED);
+        dto.setMaxTotal(PortalCarouselService.MAX_TOTAL);
+        return R.ok(dto);
     }
 
     /**
@@ -82,7 +82,7 @@ public class PortalCarouselController {
      * @return 操作结果
      */
     @PostMapping
-    public R<Boolean> save(@RequestBody PortalCarousel entity) {
+    public R<Boolean> save(@Valid @RequestBody PortalCarousel entity) {
         try {
             portalCarouselService.validateBeforeSave(entity.getStatus());
         } catch (RuntimeException e) {
@@ -118,7 +118,7 @@ public class PortalCarouselController {
     }
 
     @PutMapping
-    public R<Boolean> update(@RequestBody PortalCarousel entity) {
+    public R<Boolean> update(@Valid @RequestBody PortalCarousel entity) {
         entity.setUpdateTime(LocalDateTime.now());
         boolean result = portalCarouselService.updateById(entity);
         return R.ok(result);

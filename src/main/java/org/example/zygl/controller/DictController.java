@@ -1,12 +1,13 @@
 package org.example.zygl.controller;
 
+import org.example.zygl.dto.DictItemDTO;
+import org.example.zygl.enums.ResourceScopeEnum;
+import org.example.zygl.enums.ResourceTypeEnum;
 import org.example.zygl.utils.R;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 数据字典接口
@@ -23,15 +24,16 @@ public class DictController {
      * 对应前端"学段"下拉选择。
      */
     @GetMapping("/school-stage")
-    public R<List<Map<String, String>>> listSchoolStage() {
-        List<Map<String, String>> stages = new ArrayList<>();
-        stages.add(buildItem("primary", "小学"));
-        stages.add(buildItem("junior", "初中"));
-        stages.add(buildItem("senior", "高中"));
-        stages.add(buildItem("vocational", "职业教育"));
-        stages.add(buildItem("higher", "高等教育"));
-        stages.add(buildItem("preschool", "学前教育"));
-        stages.add(buildItem("special", "特殊教育"));
+    public R<List<DictItemDTO<String>>> listSchoolStage() {
+        List<DictItemDTO<String>> stages = Arrays.asList(
+                new DictItemDTO<>("primary", "小学"),
+                new DictItemDTO<>("junior", "初中"),
+                new DictItemDTO<>("senior", "高中"),
+                new DictItemDTO<>("vocational", "职业教育"),
+                new DictItemDTO<>("higher", "高等教育"),
+                new DictItemDTO<>("preschool", "学前教育"),
+                new DictItemDTO<>("special", "特殊教育")
+        );
         return R.ok(stages);
     }
 
@@ -41,10 +43,11 @@ public class DictController {
      * 对应前端"资源类型"下拉选择。
      */
     @GetMapping("/resource-type")
-    public R<List<Map<String, Object>>> listResourceType() {
-        List<Map<String, Object>> types = new ArrayList<>();
-        types.add(buildTypeItem(1, "视频"));
-        types.add(buildTypeItem(2, "文档"));
+    public R<List<DictItemDTO<Integer>>> listResourceType() {
+        List<DictItemDTO<Integer>> types = Arrays.asList(
+                new DictItemDTO<>(ResourceTypeEnum.VIDEO.getCode(), ResourceTypeEnum.VIDEO.getDesc()),
+                new DictItemDTO<>(ResourceTypeEnum.DOCUMENT.getCode(), ResourceTypeEnum.DOCUMENT.getDesc())
+        );
         return R.ok(types);
     }
 
@@ -52,24 +55,11 @@ public class DictController {
      * 参与范围列表
      */
     @GetMapping("/scope")
-    public R<List<Map<String, Object>>> listScope() {
-        List<Map<String, Object>> scopes = new ArrayList<>();
-        scopes.add(buildTypeItem(1, "公开"));
-        scopes.add(buildTypeItem(2, "指定范围"));
+    public R<List<DictItemDTO<Integer>>> listScope() {
+        List<DictItemDTO<Integer>> scopes = Arrays.asList(
+                new DictItemDTO<>(ResourceScopeEnum.PUBLIC.getCode(), ResourceScopeEnum.PUBLIC.getDesc()),
+                new DictItemDTO<>(ResourceScopeEnum.SPECIFIED.getCode(), ResourceScopeEnum.SPECIFIED.getDesc())
+        );
         return R.ok(scopes);
-    }
-
-    private Map<String, String> buildItem(String value, String label) {
-        Map<String, String> item = new HashMap<>();
-        item.put("value", value);
-        item.put("label", label);
-        return item;
-    }
-
-    private Map<String, Object> buildTypeItem(int value, String label) {
-        Map<String, Object> item = new HashMap<>();
-        item.put("value", value);
-        item.put("label", label);
-        return item;
     }
 }

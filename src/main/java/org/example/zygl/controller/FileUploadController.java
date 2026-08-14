@@ -1,13 +1,11 @@
 package org.example.zygl.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.zygl.dto.FileUploadResultDTO;
 import org.example.zygl.service.FileUploadService;
 import org.example.zygl.utils.R;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 文件上传接口
@@ -26,51 +24,46 @@ public class FileUploadController {
      * 上传封面图片
      */
     @PostMapping("/cover")
-    public R<Map<String, Object>> uploadCover(@RequestParam("file") MultipartFile file) {
+    public R<FileUploadResultDTO> uploadCover(@RequestParam("file") MultipartFile file) {
         String url = fileUploadService.uploadCover(file);
-        Map<String, Object> result = new HashMap<>();
-        result.put("url", url);
-        result.put("size", file.getSize());
-        result.put("originalName", file.getOriginalFilename());
-        return R.ok(result);
+        return R.ok(buildResult(url, file));
     }
 
     /**
      * 上传视频文件
      */
     @PostMapping("/video")
-    public R<Map<String, Object>> uploadVideo(@RequestParam("file") MultipartFile file) {
+    public R<FileUploadResultDTO> uploadVideo(@RequestParam("file") MultipartFile file) {
         String url = fileUploadService.uploadVideo(file);
-        Map<String, Object> result = new HashMap<>();
-        result.put("url", url);
-        result.put("size", file.getSize());
-        result.put("originalName", file.getOriginalFilename());
-        return R.ok(result);
+        return R.ok(buildResult(url, file));
     }
 
     /**
      * 上传文档文件
      */
     @PostMapping("/document")
-    public R<Map<String, Object>> uploadDocument(@RequestParam("file") MultipartFile file) {
+    public R<FileUploadResultDTO> uploadDocument(@RequestParam("file") MultipartFile file) {
         String url = fileUploadService.uploadDocument(file);
-        Map<String, Object> result = new HashMap<>();
-        result.put("url", url);
-        result.put("size", file.getSize());
-        result.put("originalName", file.getOriginalFilename());
-        return R.ok(result);
+        return R.ok(buildResult(url, file));
     }
 
     /**
      * 上传附件文件
      */
     @PostMapping("/attachment")
-    public R<Map<String, Object>> uploadAttachment(@RequestParam("file") MultipartFile file) {
+    public R<FileUploadResultDTO> uploadAttachment(@RequestParam("file") MultipartFile file) {
         String url = fileUploadService.uploadAttachment(file);
-        Map<String, Object> result = new HashMap<>();
-        result.put("url", url);
-        result.put("size", file.getSize());
-        result.put("originalName", file.getOriginalFilename());
-        return R.ok(result);
+        return R.ok(buildResult(url, file));
+    }
+
+    /**
+     * 构建上传结果 DTO
+     */
+    private FileUploadResultDTO buildResult(String url, MultipartFile file) {
+        FileUploadResultDTO dto = new FileUploadResultDTO();
+        dto.setUrl(url);
+        dto.setSize(file.getSize());
+        dto.setOriginalName(file.getOriginalFilename());
+        return dto;
     }
 }

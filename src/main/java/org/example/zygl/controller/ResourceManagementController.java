@@ -129,7 +129,7 @@ public class ResourceManagementController {
      * 新增资源
      */
     @PostMapping
-    public R<Boolean> save(@RequestBody ResourceManagement entity) {
+    public R<Boolean> save(@Valid @RequestBody ResourceManagement entity) {
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
         boolean result = resourceManagementService.save(entity);
@@ -147,7 +147,7 @@ public class ResourceManagementController {
     }
 
     @PutMapping
-    public R<Boolean> update(@RequestBody ResourceManagement entity) {
+    public R<Boolean> update(@Valid @RequestBody ResourceManagement entity) {
         entity.setUpdateTime(LocalDateTime.now());
         boolean result = resourceManagementService.updateById(entity);
         return R.ok(result);

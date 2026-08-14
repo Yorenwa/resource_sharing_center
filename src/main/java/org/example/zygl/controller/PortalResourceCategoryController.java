@@ -111,7 +111,7 @@ public class PortalResourceCategoryController {
      * @return 操作结果
      */
     @PostMapping
-    public R<Boolean> save(@RequestBody PortalResourceCategory entity) {
+    public R<Boolean> save(@Valid @RequestBody PortalResourceCategory entity) {
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
         boolean result = portalResourceCategoryService.save(entity);
@@ -130,7 +130,7 @@ public class PortalResourceCategoryController {
      */
     @PostMapping("/child/{parentId}")
     public R<Boolean> addChild(@PathVariable Long parentId,
-                                @RequestBody PortalResourceCategory entity) {
+                                @Valid @RequestBody PortalResourceCategory entity) {
         try {
             entity.setCreateTime(LocalDateTime.now());
             entity.setUpdateTime(LocalDateTime.now());
@@ -152,7 +152,7 @@ public class PortalResourceCategoryController {
     }
 
     @PutMapping
-    public R<Boolean> update(@RequestBody PortalResourceCategory entity) {
+    public R<Boolean> update(@Valid @RequestBody PortalResourceCategory entity) {
         entity.setUpdateTime(LocalDateTime.now());
         boolean result = portalResourceCategoryService.updateById(entity);
         return R.ok(result);

@@ -42,7 +42,7 @@ public class ResourceScopeSchoolController {
     }
 
     @PostMapping
-    public R<Boolean> save(@RequestBody ResourceScopeSchool entity) {
+    public R<Boolean> save(@Valid @RequestBody ResourceScopeSchool entity) {
         boolean result = resourceScopeSchoolService.save(entity);
         return R.ok(result);
     }
@@ -54,7 +54,7 @@ public class ResourceScopeSchoolController {
     }
 
     @PutMapping
-    public R<Boolean> update(@RequestBody ResourceScopeSchool entity) {
+    public R<Boolean> update(@Valid @RequestBody ResourceScopeSchool entity) {
         boolean result = resourceScopeSchoolService.updateById(entity);
         return R.ok(result);
     }
